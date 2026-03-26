@@ -3,140 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Achadinhos Profissional</title>
-    <script src="https://unpkg.com/jimp/browser/lib/jimp.js"></script>
+    <title>App Achadinhos V3</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h2 { color: #e91e63; text-align: center; margin-top: 0; }
-        label { font-weight: bold; display: block; margin-top: 15px; font-size: 14px; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: #e91e63; text-align: center; margin: 0 0 20px 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; font-size: 13px; }
         input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
         button { background: #e91e63; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
-        button:active { background: #ad1457; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        #resultado { display: none; margin-top: 20px; padding: 15px; background: #fff0f5; border: 2px dashed #e91e63; border-radius: 10px; }
-        .legenda { white-space: pre-wrap; background: white; padding: 10px; border-radius: 5px; border: 1px solid #eee; font-size: 14px; margin-bottom: 10px; }
-        #final-media { width: 100%; border-radius: 10px; margin-top: 10px; }
-        #aguarde { display: none; text-align: center; color: #666; font-size: 14px; margin-top: 10px; }
+        #resultado { display: none; margin-top: 20px; border: 2px dashed #e91e63; border-radius: 10px; padding: 10px; text-align: center; }
+        #canvas-preview { width: 100%; border-radius: 10px; margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .legenda { white-space: pre-wrap; background: #fff0f5; padding: 10px; border-radius: 5px; font-size: 14px; text-align: left; margin-bottom: 10px; border: 1px solid #ffc1d6; }
+        .download-btn { background: #333; margin-top: 10px; display: inline-block; text-decoration: none; color: white; padding: 10px; border-radius: 10px; width: 100%; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🛍️ Gerador Profissional</h2>
+    <h2>🛍️ Gerador de Achadinhos</h2>
     
-    <label>1. Escolha a Foto do Produto (Recorte e Marca):</label>
-    <input type="file" id="arquivo" accept="image/*">
+    <label>1. Foto do Produto:</label>
+    <input type="file" id="foto" accept="image/*">
 
-    <label>2. Sua Marca d'água (PNG transparente):</label>
-    <input type="file" id="marca" accept="image/*">
+    <label>2. Sua Logo (Marca d'água):</label>
+    <input type="file" id="logo" accept="image/*">
 
-    <label>3. Seu Link de Afiliado:</label>
-    <input type="text" id="link-venda" placeholder="Link da Shopee ou ML">
+    <label>3. Seu Link:</label>
+    <input type="text" id="link" placeholder="Cole seu link aqui">
 
-    <label>4. Qual o nicho?</label>
-    <select id="nicho">
-        <option value="moda">👗 Moda</option>
-        <option value="cozinha">🍳 Cozinha</option>
-        <option value="casa">🏠 Casa</option>
-    </select>
-
-    <button id="btn-processar" onclick="processarImagem()">🚀 RECORTAR, COLOCAR MARCA E COPIAR LEGENDA</button>
-    <div id="aguarde">⏳ Processando imagem... aguarde.</div>
+    <button onclick="processar()">🚀 RECORTAR E GERAR</button>
 
     <div id="resultado">
-        <strong>✅ Sucesso! Legenda Copiada. Foto pronta abaixo.</strong>
         <div class="legenda" id="texto-final"></div>
-        <img id="final-media">
-        <a id="btn-download" style="display:none; text-align:center; display:block; padding: 10px; background: #333; color: white; border-radius: 8px; text-decoration: none; margin-top: 10px;">💾 BAIXAR FOTO FINAL</a>
+        <canvas id="canvas-preview"></canvas>
+        <a id="download" class="download-btn">💾 BAIXAR IMAGEM PRONTA</a>
+        <p style="font-size: 12px; color: #666;">(Legenda já copiada!)</p>
     </div>
 </div>
 
 <script>
-    const frases = {
-        moda: "OLHA ESSE LOOK! ✨\n\nQualidade premium e veste super bem. Perfeito para o seu dia!\n\n🛍️ COMPRE AQUI: ",
-        cozinha: "Sua cozinha precisa disso! 🍳\n\nPraticidade nota 10 no dia a dia. Facilita muito!\n\n🛍️ COMPRE AQUI: ",
-        casa: "O achadinho perfeito para o seu lar! 🏠\n\nLindo, prático e muito barato.\n\n🛍️ COMPRE AQUI: "
-    };
-
-    async function processarImagem() {
-        const fileIn = document.getElementById('arquivo').files[0];
-        const fileMarca = document.getElementById('marca').files[0];
-        const btn = document.getElementById('btn-processar');
-        const aguarde = document.getElementById('aguarde');
+    function processar() {
+        const fotoFile = document.getElementById('foto').files[0];
+        const logoFile = document.getElementById('logo').files[0];
+        const link = document.getElementById('link').value || "LINK NA BIO";
         
-        if (!fileIn) { alert("⚠️ Selecione a foto do produto."); return; }
-        if (!fileMarca) { alert("⚠️ Selecione sua imagem de marca d'água."); return; }
-
-        // Interface
-        btn.disabled = true;
-        btn.innerText = "⏳ PROCESSANDO...";
-        aguarde.style.display = 'block';
-
-        try {
-            const reader = new FileReader();
-            
-            // 1. Ler a imagem do produto
-            const produtoBuffer = await new Promise(resolve => {
-                const r = new FileReader();
-                r.onload = e => resolve(e.target.result);
-                r.readAsArrayBuffer(fileIn);
-            });
-            const image = await Jimp.read(produtoBuffer);
-
-            // 2. Recortar (Square/Quadrado para Instagram)
-            const w = image.bitmap.width;
-            const h = image.bitmap.height;
-            const min = Math.min(w, h);
-            image.crop(0, 0, min, min); // Recorta um quadrado perfeito
-
-            // 3. Ler a marca d'água
-            const marcaBuffer = await new Promise(resolve => {
-                const r = new FileReader();
-                r.onload = e => resolve(e.target.result);
-                r.readAsArrayBuffer(fileMarca);
-            });
-            const logo = await Jimp.read(marcaBuffer);
-
-            // Redimensionar logo para 15% da imagem final
-            const logoW = min * 0.15;
-            logo.resize(logoW, Jimp.AUTO);
-
-            // 4. Colocar Marca d'água (Canto inferior direito, com 10px de margem)
-            const margin = 10;
-            const logoX = min - logo.bitmap.width - margin;
-            const logoY = min - logo.bitmap.height - margin;
-            image.composite(logo, logoX, logoY, {
-                mode: Jimp.BLEND_SOURCE_OVER,
-                opacitySource: 1 // Totalmente visível
-            });
-
-            // 5. Mostrar resultado final
-            const finalBase64 = await image.getBase64Async(Jimp.MIME_JPEG);
-            document.getElementById('final-media').src = finalBase64;
-            document.getElementById('resultado').style.display = 'block';
-
-            // Preparar Download
-            const btnDownload = document.getElementById('btn-download');
-            btnDownload.href = finalBase64;
-            btnDownload.download = "achadinho-final.jpg";
-
-            // 6. Gerar e Copiar Legenda (Igual ao anterior)
-            const link = document.getElementById('link-venda').value || "LINK NA BIO";
-            const nicho = document.getElementById('nicho').value;
-            const legendaCompleta = frases[nicho] + link + "\n\n#achadinhos #shopee #promo";
-            document.getElementById('texto-final').innerText = legendaCompleta;
-            navigator.clipboard.writeText(legendaCompleta);
-
-        } catch (error) {
-            console.error(error);
-            alert("❌ Erro ao processar imagem. Verifique se os arquivos são fotos válidas.");
-        } finally {
-            // Interface de volta
-            btn.disabled = false;
-            btn.innerText = "🚀 RECORTAR, COLOCAR MARCA E COPIAR LEGENDA";
-            aguarde.style.display = 'none';
+        if (!fotoFile || !logoFile) {
+            alert("⚠️ Por favor, selecione a foto e a logo!");
+            return;
         }
+
+        const canvas = document.getElementById('canvas-preview');
+        const ctx = canvas.getContext('2d');
+        const imgFoto = new Image();
+        const imgLogo = new Image();
+
+        imgFoto.onload = function() {
+            // 1. Criar um quadrado de 1080x1080 (Padrão Instagram)
+            canvas.width = 1080;
+            canvas.height = 1080;
+
+            // 2. Recortar a foto para preencher o quadrado
+            let size = Math.min(imgFoto.width, imgFoto.height);
+            let xOffset = (imgFoto.width - size) / 2;
+            let yOffset = (imgFoto.height - size) / 2;
+            ctx.drawImage(imgFoto, xOffset, yOffset, size, size, 0, 0, 1080, 1080);
+
+            // 3. Carregar a Logo
+            const readerLogo = new FileReader();
+            readerLogo.onload = function(e) {
+                imgLogo.onload = function() {
+                    // Tamanho da logo (20% do total)
+                    let logoW = 200;
+                    let logoH = (imgLogo.height * logoW) / imgLogo.width;
+                    
+                    // Desenhar logo no canto inferior direito
+                    ctx.drawImage(imgLogo, 1080 - logoW - 30, 1080 - logoH - 30, logoW, logoH);
+
+                    // 4. Mostrar Resultado e Download
+                    document.getElementById('resultado').style.display = 'block';
+                    document.getElementById('download').href = canvas.toDataURL("image/jpeg", 0.9);
+                    document.getElementById('download').download = "achadinho_pronto.jpg";
+
+                    // 5. Legenda e Copiar
+                    const legenda = "OLHA ESSE ACHADINHO! ✨\n\nQualidade incrível! Amei esse item. 😍\n\n🛍️ COMPRE AQUI: " + link + "\n\n#achadinhos #shopee #vendas";
+                    document.getElementById('texto-final').innerText = legenda;
+                    
+                    const el = document.createElement('textarea');
+                    el.value = legenda;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+
+                    alert("✅ Legenda copiada e imagem pronta!");
+                };
+                imgLogo.src = e.target.result;
+            };
+            readerLogo.readAsDataURL(logoFile);
+        };
+        
+        const readerFoto = new FileReader();
+        readerFoto.onload = (e) => imgFoto.src = e.target.result;
+        readerFoto.readAsDataURL(fotoFile);
     }
 </script>
 
