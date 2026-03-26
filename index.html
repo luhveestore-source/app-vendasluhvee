@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Achadinhos (Sem Marca)</title>
+    <title>App Achadinhos Variados</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
@@ -28,23 +28,31 @@
     <label>2. Seu Link:</label>
     <input type="text" id="link" placeholder="Cole seu link aqui">
 
-    <button onclick="processar()">🚀 RECORTAR E GERAR</button>
+    <button onclick="processar()">🚀 RECORTAR E GERAR LEGENDA NOVO</button>
 
     <div id="resultado">
         <div class="legenda" id="texto-final"></div>
         <canvas id="canvas-preview"></canvas>
-        <a id="download" class="download-btn">💾 BAIXAR IMAGEM RECORTADA</a>
-        <p style="font-size: 12px; color: #666;">(Legenda já copiada!)</p>
+        <a id="download" class="download-btn">💾 BAIXAR IMAGEM</a>
+        <p style="font-size: 12px; color: #666;">(Legenda diferente copiada!)</p>
     </div>
 </div>
 
 <script>
+    // LISTA DE FRASES DIFERENTES
+    const frases = [
+        "OLHA ESSE ACHADINHO! ✨\n\nQualidade incrível! Amei esse item. 😍\n\n🛍️ COMPRE AQUI: ",
+        "ACHADO DO DIA! 🚨\n\nEu não acreditei no preço desse produto, vale muito a pena! 🔥\n\n🛒 LINK: ",
+        "VOCÊ PRECISA DISSO! 😱\n\nSério, facilitou muito minha vida por aqui. Nota 10! ✨\n\n👉 COMPRE NO LINK: ",
+        "PARA TUDO! 🖐️\n\nOlha esse detalhe, é muita lindeza em um produto só. 😍\n\n🔗 CONFIRA AQUI: "
+    ];
+
     function processar() {
         const fotoFile = document.getElementById('foto').files[0];
         const link = document.getElementById('link').value || "LINK NA BIO";
         
         if (!fotoFile) {
-            alert("⚠️ Por favor, selecione a foto do produto!");
+            alert("⚠️ Selecione a foto!");
             return;
         }
 
@@ -53,33 +61,19 @@
         const imgFoto = new Image();
 
         imgFoto.onload = function() {
-            // 1. Criar um quadrado de 1080x1080 (Padrão Instagram)
             canvas.width = 1080;
             canvas.height = 1080;
-
-            // 2. Recortar a foto para preencher o quadrado (centralizado)
             let size = Math.min(imgFoto.width, imgFoto.height);
             let xOffset = (imgFoto.width - size) / 2;
             let yOffset = (imgFoto.height - size) / 2;
             ctx.drawImage(imgFoto, xOffset, yOffset, size, size, 0, 0, 1080, 1080);
 
-            // 3. Mostrar Resultado e Download
             document.getElementById('resultado').style.display = 'block';
             document.getElementById('download').href = canvas.toDataURL("image/jpeg", 0.9);
-            document.getElementById('download').download = "achadinho_pronto.jpg";
+            document.getElementById('download').download = "achadinho.jpg";
 
-            // 4. Legenda e Copiar
-            const legenda = "OLHA ESSE ACHADINHO! ✨\n\nQualidade incrível! Amei esse item. 😍\n\n👉 COMPRE AQUI: " + link + "\n\n#achadinhos #shopee #vendas";
-            document.getElementById('texto-final').innerText = legenda;
+            // ESCOLHE UMA FRASE ALEATÓRIA DA LISTA
+            const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
+            const legendaFinal = fraseAleatoria + link + "\n\n#achadinhos #shopee #vendas";
             
-            const el = document.createElement('textarea');
-            el.value = legenda;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            alert("✅ Legenda copiada e imagem pronta!");
-        };
-        
-        const readerFoto = new FileReader()
+            document.getElementById('texto-final').innerText = legendaFinal;
