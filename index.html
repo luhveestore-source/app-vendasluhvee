@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Achadinhos V3</title>
+    <title>App Achadinhos (Sem Marca)</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
@@ -25,10 +25,7 @@
     <label>1. Foto do Produto:</label>
     <input type="file" id="foto" accept="image/*">
 
-    <label>2. Sua Logo (Marca d'água):</label>
-    <input type="file" id="logo" accept="image/*">
-
-    <label>3. Seu Link:</label>
+    <label>2. Seu Link:</label>
     <input type="text" id="link" placeholder="Cole seu link aqui">
 
     <button onclick="processar()">🚀 RECORTAR E GERAR</button>
@@ -36,7 +33,7 @@
     <div id="resultado">
         <div class="legenda" id="texto-final"></div>
         <canvas id="canvas-preview"></canvas>
-        <a id="download" class="download-btn">💾 BAIXAR IMAGEM PRONTA</a>
+        <a id="download" class="download-btn">💾 BAIXAR IMAGEM RECORTADA</a>
         <p style="font-size: 12px; color: #666;">(Legenda já copiada!)</p>
     </div>
 </div>
@@ -44,69 +41,45 @@
 <script>
     function processar() {
         const fotoFile = document.getElementById('foto').files[0];
-        const logoFile = document.getElementById('logo').files[0];
         const link = document.getElementById('link').value || "LINK NA BIO";
         
-        if (!fotoFile || !logoFile) {
-            alert("⚠️ Por favor, selecione a foto e a logo!");
+        if (!fotoFile) {
+            alert("⚠️ Por favor, selecione a foto do produto!");
             return;
         }
 
         const canvas = document.getElementById('canvas-preview');
         const ctx = canvas.getContext('2d');
         const imgFoto = new Image();
-        const imgLogo = new Image();
 
         imgFoto.onload = function() {
             // 1. Criar um quadrado de 1080x1080 (Padrão Instagram)
             canvas.width = 1080;
             canvas.height = 1080;
 
-            // 2. Recortar a foto para preencher o quadrado
+            // 2. Recortar a foto para preencher o quadrado (centralizado)
             let size = Math.min(imgFoto.width, imgFoto.height);
             let xOffset = (imgFoto.width - size) / 2;
             let yOffset = (imgFoto.height - size) / 2;
             ctx.drawImage(imgFoto, xOffset, yOffset, size, size, 0, 0, 1080, 1080);
 
-            // 3. Carregar a Logo
-            const readerLogo = new FileReader();
-            readerLogo.onload = function(e) {
-                imgLogo.onload = function() {
-                    // Tamanho da logo (20% do total)
-                    let logoW = 200;
-                    let logoH = (imgLogo.height * logoW) / imgLogo.width;
-                    
-                    // Desenhar logo no canto inferior direito
-                    ctx.drawImage(imgLogo, 1080 - logoW - 30, 1080 - logoH - 30, logoW, logoH);
+            // 3. Mostrar Resultado e Download
+            document.getElementById('resultado').style.display = 'block';
+            document.getElementById('download').href = canvas.toDataURL("image/jpeg", 0.9);
+            document.getElementById('download').download = "achadinho_pronto.jpg";
 
-                    // 4. Mostrar Resultado e Download
-                    document.getElementById('resultado').style.display = 'block';
-                    document.getElementById('download').href = canvas.toDataURL("image/jpeg", 0.9);
-                    document.getElementById('download').download = "achadinho_pronto.jpg";
+            // 4. Legenda e Copiar
+            const legenda = "OLHA ESSE ACHADINHO! ✨\n\nQualidade incrível! Amei esse item. 😍\n\n👉 COMPRE AQUI: " + link + "\n\n#achadinhos #shopee #vendas";
+            document.getElementById('texto-final').innerText = legenda;
+            
+            const el = document.createElement('textarea');
+            el.value = legenda;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
 
-                    // 5. Legenda e Copiar
-                    const legenda = "OLHA ESSE ACHADINHO! ✨\n\nQualidade incrível! Amei esse item. 😍\n\n🛍️ COMPRE AQUI: " + link + "\n\n#achadinhos #shopee #vendas";
-                    document.getElementById('texto-final').innerText = legenda;
-                    
-                    const el = document.createElement('textarea');
-                    el.value = legenda;
-                    document.body.appendChild(el);
-                    el.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(el);
-
-                    alert("✅ Legenda copiada e imagem pronta!");
-                };
-                imgLogo.src = e.target.result;
-            };
-            readerLogo.readAsDataURL(logoFile);
+            alert("✅ Legenda copiada e imagem pronta!");
         };
         
-        const readerFoto = new FileReader();
-        readerFoto.onload = (e) => imgFoto.src = e.target.result;
-        readerFoto.readAsDataURL(fotoFile);
-    }
-</script>
-
-</body>
-</html>
+        const readerFoto = new FileReader()
