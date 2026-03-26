@@ -1,151 +1,94 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Achadinhos Pro - Central de Vendas</title>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <title>App Achadinhos</title>
     <style>
-        :root { --primary: #e91e63; --secondary: #25d366; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .app-card { background: white; width: 100%; max-width: 600px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 25px; }
-        h2 { text-align: center; color: var(--primary); margin-bottom: 5px; }
-        p.desc { text-align: center; font-size: 14px; color: #666; margin-bottom: 20px; }
-        
-        .step { background: #fdfdfd; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; }
-        label { font-weight: bold; display: block; margin-bottom: 8px; font-size: 14px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        
-        .btn { border: none; padding: 15px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 16px; }
-        .btn-insta { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-        .btn-zap { background: var(--secondary); }
-        .btn-retry { background: #666; margin-top: 5px; font-size: 13px; padding: 10px; }
-
-        #result-area { display: none; margin-top: 25px; padding: 15px; background: #fff5f7; border: 2px dashed var(--primary); border-radius: 15px; }
-        .legenda-box { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; white-space: pre-wrap; margin-bottom: 10px; position: relative; }
-        .status { text-align: center; font-weight: bold; color: var(--primary); margin: 10px 0; }
-        video, img { width: 100%; border-radius: 10px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #e91e63; text-align: center; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; font-size: 14px; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #e91e63; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        button:active { background: #ad1457; }
+        #resultado { display: none; margin-top: 20px; padding: 15px; background: #fff0f5; border: 2px dashed #e91e63; border-radius: 10px; }
+        .legenda { white-space: pre-wrap; background: white; padding: 10px; border-radius: 5px; border: 1px solid #eee; font-size: 14px; margin-bottom: 10px; }
+        #preview-img, #preview-vid { width: 100%; border-radius: 10px; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="app-card">
-    <h2>🛍️ Criador de Achadinhos Pro</h2>
-    <p class="desc">Vídeos e Fotos com sua Marca + Legendas Magnéticas</p>
+<div class="card">
+    <h2>🛍️ Gerador de Vendas</h2>
+    
+    <label>1. Escolha a Foto ou Vídeo:</label>
+    <input type="file" id="arquivo" accept="image/,video/" onchange="mostrarPreview()">
 
-    <div class="step">
-        <label>1. Mídia do Produto (Vídeo ou Foto):</label>
-        <input type="file" id="media-input" accept="video/,image/">
-    </div>
+    <label>2. Seu Link de Afiliado:</label>
+    <input type="text" id="link-venda" placeholder="Cole o link da Shopee ou ML">
 
-    <div class="step">
-        <label>2. Sua Logo (Marca d'água PNG):</label>
-        <input type="file" id="logo-input" accept="image/*">
-    </div>
+    <label>3. Qual o nicho?</label>
+    <select id="nicho">
+        <option value="moda">👗 Moda</option>
+        <option value="cozinha">🍳 Cozinha</option>
+        <option value="casa">🏠 Casa</option>
+    </select>
 
-    <div class="step">
-        <label>3. Escolha o Nicho e cole seu Link:</label>
-        <select id="nicho-select" style="margin-bottom: 10px;">
-            <option value="moda">👗 Moda & Acessórios</option>
-            <option value="cozinha">🍳 Cozinha & Utilidades</option>
-            <option value="pet">🐾 Mundo Pet</option>
-            <option value="tech">📱 Tecnologia & Gadgets</option>
-            <option value="casa">🏠 Casa & Decoração</option>
-        </select>
-        <input type="text" id="link-venda"value=https://luhveestore-unbgvh5h.manus.space placeholder="Link da Shopee, Mercado Livre ou Bio">
-    </div>
+    <button onclick="gerarPost()">🚀 GERAR E COPIAR LEGENDA</button>
 
-    <button class="btn btn-insta" onclick="gerarPost('insta')">GERAR PARA INSTAGRAM</button>
-    <button class="btn btn-zap" onclick="gerarPost('zap')">GERAR PARA WHATSAPP</button>
-
-    <div id="status-msg" class="status"></div>
-
-    <div id="result-area">
-        <label>✨ Legenda Pronta (Copiada!):</label>
-        <div class="legenda-box" id="legenda-texto"></div>
-        <button class="btn btn-retry" onclick="gerarLegenda()">🔄 Não gostei, sortear outra!</button>
-        
-        <div id="preview-container"></div>
+    <div id="resultado">
+        <strong>✅ Legenda Copiada!</strong>
+        <div class="legenda" id="texto-final"></div>
+        <img id="preview-img">
+        <video id="preview-vid" controls></video>
     </div>
 </div>
 
 <script>
-    // BANCO DE DADOS DE FRASES
-    const banco = {
-        moda: {
-            ini: ["Gente, olha esse look! ✨", "Achadinho de moda real! 😍", "O caimento dessa peça é surreal...", "Para tudo nesse visual! 👗", "Achei a peça coringa que faltava!"],
-            meio: ["Veste super bem e o tecido é de altíssima qualidade.", "Parece de loja de luxo, mas o preço é de Shopee.", "Chegou muito rápido e as medidas batem certinho.", "Dá pra montar vários looks incríveis com isso."],
-            fim: ["Link promocional aqui: ", "Garanta o seu antes que esgote: ", "Link na Bio na categoria MODA: ", "Comenta EU QUERO que te mando o link!"]
-        },
-        cozinha: {
-            ini: ["Minha cozinha subiu de nível! 🍳", "O utensílio que eu não sabia que precisava...", "Dona de casa precisa ver esse achadinho! 🚨", "Praticidade nível máximo aqui em casa!", "Olha que facilidade para cozinhar! ✨"],
-            meio: ["Fácil de limpar e super resistente.", "Economizei muito tempo depois que comprei isso.", "Material nota 10 e design moderno.", "Todo mundo que vê quer um igual."],
-            fim: ["Link direto da promoção: ", "Aproveita o cupom no link da Bio: ", "Confere o preço aqui: ", "Link nos stories e na Bio! 🔥"]
-        },
-        pet: {
-            ini: ["Seu pet vai amar isso aqui! 🐾", "O achadinho preferido do meu dog... 🐶", "Gatos viciados nesse item! 🐈", "Parece luxo, mas o preço é de Shopee! 🚨"],
-            meio: ["Material seguro e os bichinhos amam usar.", "Resolveu o problema aqui em casa de um jeito lindo.", "É resistente e muito fácil de lavar.", "Melhor investimento para o meu filho de 4 patas."],
-            fim: ["Link na Bio na categoria PET! 🐾", "Comenta PET que eu te mando o link!", "Corre que o desconto expira hoje! 🏃‍♂️", "O link direto está nos destaques! 🔥"]
-        },
-        tech: {
-            ini: ["O gadget que parece do futuro! 📱", "Melhore seu setup com esse achadinho... 💻", "Isso facilita demais a vida tecnológica! ⚡", "Um unboxing que vale cada centavo! 📦"],
-            meio: ["A velocidade e o design são impecáveis.", "Pelo valor, entrega muito mais que as marcas famosas.", "Super compacto e funcional para levar em qualquer lugar.", "Tecnologia de ponta que cabe no seu bolso."],
-            fim: ["Link na Bio com desconto exclusivo! 🔗", "Comenta TECH que o link vai pra você!", "Estoque limitado no Mercado Livre! 🚨", "Clica no link da Bio antes que o preço suba! 🔥"]
-        },
-        casa: {
-            ini: ["Minha casa está mais linda agora! 🏠", "O achadinho de decoração que eu precisava...", "Transformei meu ambiente gastando pouco! ✨", "Utilidade pública para o seu lar! 🚨"],
-            meio: ["A qualidade do acabamento é surpreendente.", "Fácil de instalar e muda totalmente a cara do cômodo.", "Prático, bonito e muito barato.", "Item essencial para quem ama organização."],
-            fim: ["Link direto aqui: ", "Confira na Bio na seção CASA: ", "Comenta CASA que te envio o link! 🏠", "Preço promocional no link: "]
-        }
+    const frases = {
+        moda: "OLHA ESSE LOOK! ✨\n\nQualidade incrível e veste super bem. Perfeito para o seu dia!\n\n🛍️ COMPRE AQUI: ",
+        cozinha: "Sua cozinha precisa disso! 🍳\n\nPraticidade nota 10 no dia a dia. Facilita muito!\n\n🛍️ COMPRE AQUI: ",
+        casa: "O achadinho perfeito para o seu lar! 🏠\n\nLindo, prático e muito barato.\n\n🛍️ COMPRE AQUI: "
     };
 
-    let canalAtual = 'insta';
-
-    function gerarLegenda() {
-        const nicho = document.getElementById('nicho-select').value;
-        const link = document.getElementById('link-venda').value || "LINK NA BIO";
-        const db = banco[nicho];
-        const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    function mostrarPreview() {
+        const file = document.getElementById('arquivo').files[0];
+        const img = document.getElementById('preview-img');
+        const vid = document.getElementById('preview-vid');
         
-        let texto = ${r(db.ini)}\n\n${r(db.meio)}\n\n👉 ${r(db.fim)} ${link};
-        if(canalAtual === 'insta') {
-            texto += \n\n#achadinhos #shopee #mercadolivre #promo #dicas #${nicho};
-        }
+        img.style.display = 'none';
+        vid.style.display = 'none';
 
-        document.getElementById('legenda-texto').innerText = texto;
-        navigator.clipboard.writeText(texto);
+        if (file) {
+            const url = URL.createObjectURL(file);
+            if (file.type.startsWith('image/')) {
+                img.src = url; img.style.display = 'block';
+            } else {
+                vid.src = url; vid.style.display = 'block';
+            }
+        }
     }
 
-    function gerarPost(canal) {
-        canalAtual = canal;
-        const mediaFile = document.getElementById('media-input').files[0];
-        const logoFile = document.getElementById('logo-input').files[0];
-
-        if (!mediaFile || !logoFile) {
-            alert("⚠️ Selecione o arquivo e sua logo!");
-            return;
-        }
-
-        document.getElementById('status-msg').innerText = "⏳ Processando... Legenda enviada para o seu teclado!";
+    function gerarPost() {
+        const link = document.getElementById('link-venda').value || "LINK NA BIO";
+        const nicho = document.getElementById('nicho').value;
+        const textoBase = frases[nicho];
         
-        gerarLegenda();
-
-        // Mostrar Preview
-        const container = document.getElementById('preview-container');
-        container.innerHTML = "";
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            if(mediaFile.type.includes('video')) {
-                const v = document.createElement('video');
-                v.src = e.target.result; v.controls = true; container.appendChild(v);
-            } else {
-                const i = document.createElement('img');
-                i.src = e.target.result; container.appendChild(i);
-            }
-            document.getElementById('result-area').style.display = 'block';
-            document.getElementById('status-msg').innerText = "✅ TUDO PRONTO!";
-        };
-        reader.readAsDataURL(mediaFile);
+        const legendaCompleta = textoBase + link + "\n\n#achadinhos #shopee #vendas #promo";
+        
+        document.getElementById('texto-final').innerText = legendaCompleta;
+        document.getElementById('resultado').style.display = 'block';
+        
+        // Copia automático
+        const tempInput = document.createElement("textarea");
+        tempInput.value = legendaCompleta;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        
+        alert("✨ Sucesso! Legenda copiada.\nAgora é só postar!");
     }
 </script>
 
