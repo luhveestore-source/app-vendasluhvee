@@ -50,17 +50,17 @@ responder_cliente <- function(msg) {
 }
 
 # =========================
-# WEBHOOK (AQUI ESTÁ A MUDANÇA)
+# WEBHOOK
 # =========================
 
 #* @post /whatsapp
-#* @serializer unboxed_json
+#* @serializer json
 function(req) {
-  # Extração manual do corpo para evitar o erro 12300
-  DADOS <- webutils::parse_http_queries(req$postBody)
+  # Extração simples para garantir compatibilidade
+  CORPO <- webutils::parse_http_queries(req$postBody)
   
-  NUMERO_CLIENTE   <- DADOS$From
-  MENSAGEM_CLIENTE <- DADOS$Body
+  NUMERO_CLIENTE   <- CORPO$From
+  MENSAGEM_CLIENTE <- CORPO$Body
   
   print(paste("MENSAGEM RECEBIDA DE:", NUMERO_CLIENTE))
 
@@ -69,6 +69,5 @@ function(req) {
     enviar_msg(NUMERO_CLIENTE, RESPOSTA_FINAL)
   }
 
-  # Retorna um JSON limpo para o Twilio ficar feliz
   return(list(status = "SUCCESS"))
 }
