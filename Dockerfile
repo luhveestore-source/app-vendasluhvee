@@ -1,20 +1,14 @@
-FROM rocker/r-ver:4.3.1
+FROM ghcr.io/r-lib/plumber:v1.2.0
 
-# Instala dependências do sistema
-RUN apt-get update && apt-get install -y \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libxml2-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Instala apenas o que é essencial e rápido
+RUN R -e "install.packages(c('httr', 'jsonlite'), repos='https://cloud.r-project.org/')"
 
-# Força a instalação dos pacotes antes de rodar o bot
-RUN R -e "install.packages('plumber', repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('httr', repos='https://cloud.r-project.org/')"
-RUN R -e "install.packages('jsonlite', repos='https://cloud.r-project.org/')"
-
+# Copia os arquivos
 COPY . /app
 WORKDIR /app
 
+# Porta padrão
 EXPOSE 8080
 
+# Comando direto para rodar
 CMD ["R", "-e", "pr <- plumber::pr('webhook.R'); pr$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT', '8080')))"]
