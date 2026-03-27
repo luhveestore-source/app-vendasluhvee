@@ -4,31 +4,29 @@ library(httr)
 # =========================
 # CONFIGURAÇÕES
 # =========================
-# O link da sua loja
 link_vendas <- "https://luhveestore-unbgvh5h.manus.space"
-
-# Pegando as chaves de forma segura do ambiente (Render)
-TWILIO_SID   <- Sys.getenv("TWILIO_SID")
-TWILIO_TOKEN <- Sys.getenv("TWILIO_TOKEN")
 
 # =========================
 # FUNÇÃO DE ENVIO WHATSAPP
 # =========================
 enviar_msg <- function(numero, mensagem) {
-  url <- paste0("https://api.twilio.com/2010-04-01/Accounts/", TWILIO_SID, "/Messages.json")
+  # Lemos as chaves aqui dentro para garantir que o Render já as carregou
+  sid   <- Sys.getenv("TWILIO_SID")
+  token <- Sys.getenv("TWILIO_TOKEN")
   
-  # Log para debug no console do Render
-  print(paste("Enviando mensagem para:", numero))
+  url <- paste0("https://api.twilio.com/2010-04-01/Accounts/", sid, "/Messages.json")
+  
+  print(paste("Enviando resposta para:", numero))
   
   res <- POST(url,
-       authenticate(TWILIO_SID, TWILIO_TOKEN),
-       body = list(
-         From = "whatsapp:+14155238886", # Número padrão do Sandbox Twilio
-         To = numero,
-         Body = mensagem
-       ),
-       encode = "form"
-  )
+              authenticate(sid, token),
+              body = list(
+                From = "whatsapp:+14155238886", 
+                To = numero,
+                Body = mensagem
+              ),
+              encode = "form")
+  
   return(res)
 }
 
@@ -38,36 +36,19 @@ enviar_msg <- function(numero, mensagem) {
 responder <- function(msg) {
   msg <- tolower(msg)
 
-  if (grepl("oi|olá|ola", msg)) {
-    return(paste(
-      "😍 Oii! Bem-vinda à Luhvee Stores!",
-      "\n🔥 Tenho achadinhos exclusivos com preço baixo HOJE!",
-      "\n👉 Quer ver agora? ", link_vendas
-    ))
+  if (grepl("oi|olá|ola|bom dia|boa tarde", msg)) {
+    return(paste0("😍 Oii! Bem-vinda à Luhvee Stores!\n🔥 Tenho achadinhos exclusivos com preço baixo HOJE!\n👉 Quer ver agora? ", link_vendas))
   }
 
-  if (grepl("preço|valor|quanto", msg)) {
-    return(paste(
-      "💰 Os preços estão promocionais HOJE!",
-      "\n⚡ Corre antes que acabe:",
-      "\n👉", link_vendas
-    ))
+  if (grepl("preço|valor|quanto|custo", msg)) {
+    return(paste0("💰 Os preços estão promocionais HOJE!\n⚡ Corre antes que acabe:\n👉 ", link_vendas))
   }
 
-  if (grepl("comprar|quero|ten|tem|produto", msg)) {
-    return(paste(
-      "🛒 Perfeito! Já pode garantir o seu aqui:",
-      "\n👉", link_vendas,
-      "\n🔥 Estoque LIMITADO! Garanta o seu antes que esgote!"
-    ))
+  if (grepl("comprar|quero|ten|tem|produto|link", msg)) {
+    return(paste0("🛒 Perfeito! Já pode garantir o seu aqui:\n👉 ", link_vendas, "\n🔥 Estoque LIMITADO! Garanta o seu antes que esgote!"))
   }
 
-  # Resposta padrão caso não entenda
-  return(paste(
-    "🔥 Temos ofertas absurdas HOJE na Luhvee Stores!",
-    "\n👉 Veja aqui todos os itens:", link_vendas,
-    "\n💖 Você vai amar!"
-  ))
+  return(paste0("🔥 Temos ofertas absurdas HOJE na Luhvee Stores!\n👉 Veja aqui todos os itens: ", link_vendas, "\n💖 Você vai amar!"))
 }
 
 # =========================
@@ -76,22 +57,26 @@ responder <- function(msg) {
 
 #* @post /whatsapp
 function(req) {
-  # O Twilio envia os dados no corpo da requisição (body)
-  # No Plumber, acessamos os dados do formulário assim:
-  dados <- req$body
+  # AJUSTE VITAL: Converter o corpo da requisição para lista
+  dados <- as.list(req$postBody)
   
+  # O Twilio envia os campos 'From' e 'Body'
   numero   <- dados$From
   mensagem <- dados$Body
   
-  # Log para você ver quem está chamando no painel do Render
-  print(paste("Mensagem recebida de:", numero, "Conteúdo:", mensagem))
+  # Se os dados vierem vazios, tentamos outra forma comum no Plumber
+  if (is.null(numero)) {
+    dados <- req$body
+    numero <- dados$From
+    mensagem <- dados$Body
+  }
 
-  # Processa a resposta
-  resposta_texto <- responder(mensagem)
+  print(paste("Mensagem recebida de:", numero, "| Conteúdo:", mensagem))
 
-  # Envia de volta para o cliente
-  enviar_msg(numero, resposta_texto)
+  if (!is.null(numero) && !is.null(mensagem)) {
+    resposta_texto <- responder(mensagem)
+    enviar_msg(numero, resposta_texto)
+  }
 
-  # Retorna OK para o Twilio não tentar reenviar a mesma mensagem
   return(list(status = "success"))
 }
