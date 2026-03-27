@@ -50,24 +50,31 @@ responder_cliente <- function(msg) {
 }
 
 # =========================
-# WEBHOOK
+# WEBHOOK (VERSÃO SIMPLIFICADA)
 # =========================
 
 #* @post /whatsapp
 #* @serializer json
 function(req) {
-  # Extração simples para garantir compatibilidade
-  CORPO <- webutils::parse_http_queries(req$postBody)
+  # O Plumber já traz os dados no 'argsQuery' ou 'postBody'
+  # Vamos capturar de forma direta:
+  params <- URLdecode(req$postBody)
   
-  NUMERO_CLIENTE   <- CORPO$From
-  MENSAGEM_CLIENTE <- CORPO$Body
-  
-  print(paste("MENSAGEM RECEBIDA DE:", NUMERO_CLIENTE))
-
-  if (!is.null(NUMERO_CLIENTE) && !is.null(MENSAGEM_CLIENTE)) {
-    RESPOSTA_FINAL <- responder_cliente(MENSAGEM_CLIENTE)
-    enviar_msg(NUMERO_CLIENTE, RESPOSTA_FINAL)
-  }
+  # Extraindo o número e a mensagem usando busca de texto simples
+  try({
+    NUMERO_CLIENTE <- gsub(".From=(whatsapp%3A%2B[0-9]+).", "\\1", params)
+    NUMERO_CLIENTE <- URLdecode(NUMERO_CLIENTE)
+    
+    MENSAGEM_CLIENTE <- gsub(".Body=([^&]+).", "\\1", params)
+    MENSAGEM_CLIENTE <- URLdecode(gsub("\\+", " ", MENSAGEM_CLIENTE))
+    
+    print(paste("MENSAGEM RECEBIDA DE:", NUMERO_CLIENTE))
+    
+    if (!is.null(NUMERO_CLIENTE) && !is.null(MENSAGEM_CLIENTE)) {
+      RESPOSTA_FINAL <- responder_cliente(MENSAGEM_CLIENTE)
+      enviar_msg(NUMERO_CLIENTE, RESPOSTA_FINAL)
+    }
+  })
 
   return(list(status = "SUCCESS"))
 }
