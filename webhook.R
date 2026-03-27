@@ -10,7 +10,6 @@ LINK_VENDAS <- "https://luhveestore-unbgvh5h.manus.space"
 # FUNÇÃO DE ENVIO WHATSAPP
 # =========================
 enviar_msg <- function(numero, mensagem) {
-  # Buscando as chaves que você salvou no Render (EM MAIÚSCULAS)
   SID   <- Sys.getenv("TWILIO_SID")
   TOKEN <- Sys.getenv("TWILIO_TOKEN")
   
@@ -27,51 +26,42 @@ enviar_msg <- function(numero, mensagem) {
               ),
               encode = "form")
   
+  print(paste("STATUS DA RESPOSTA TWILIO:", status_code(RES)))
   return(RES)
 }
 
 # =========================
-# LÓGICA DO BOT (RESPOSTAS)
+# LÓGICA DO BOT
 # =========================
 responder_cliente <- function(msg) {
-  # Converte o que o cliente digitou para minúsculo para facilitar a busca
   TEXTO <- tolower(msg)
 
   if (grepl("oi|olá|ola|bom dia|boa tarde", TEXTO)) {
     return(paste0("😍 Oii! Bem-vinda à Luhvee Stores!\n🔥 Tenho achadinhos exclusivos com preço baixo HOJE!\n👉 Quer ver agora? ", LINK_VENDAS))
   }
-
   if (grepl("preço|valor|quanto|custo|preco", TEXTO)) {
     return(paste0("💰 Os preços estão promocionais HOJE!\n⚡ Corre antes que acabe:\n👉 ", LINK_VENDAS))
   }
-
   if (grepl("comprar|quero|ten|tem|produto|link|site", TEXTO)) {
     return(paste0("🛒 Perfeito! Já pode garantir o seu aqui:\n👉 ", LINK_VENDAS, "\n🔥 Estoque LIMITADO! Garanta o seu antes que esgote!"))
   }
 
-  # RESPOSTA PADRÃO
   return(paste0("🔥 Temos ofertas absurdas HOJE na Luhvee Stores!\n👉 Veja aqui todos os itens: ", LINK_VENDAS, "\n💖 Você vai amar!"))
 }
 
 # =========================
-# WEBHOOK (ENTRADA DE DADOS)
+# WEBHOOK (AQUI ESTÁ A MUDANÇA)
 # =========================
 
 #* @post /whatsapp
+#* @serializer unboxed_json
 function(req) {
-  # Garante que o Plumber entenda os dados vindos do Twilio
-  DADOS <- as.list(req$postBody)
+  # Extração manual do corpo para evitar o erro 12300
+  DADOS <- webutils::parse_http_queries(req$postBody)
   
   NUMERO_CLIENTE   <- DADOS$From
   MENSAGEM_CLIENTE <- DADOS$Body
   
-  # Caso a primeira tentativa falhe, tenta o formato alternativo
-  if (is.null(NUMERO_CLIENTE)) {
-    DADOS <- req$body
-    NUMERO_CLIENTE <- DADOS$From
-    MENSAGEM_CLIENTE <- DADOS$Body
-  }
-
   print(paste("MENSAGEM RECEBIDA DE:", NUMERO_CLIENTE))
 
   if (!is.null(NUMERO_CLIENTE) && !is.null(MENSAGEM_CLIENTE)) {
@@ -79,5 +69,6 @@ function(req) {
     enviar_msg(NUMERO_CLIENTE, RESPOSTA_FINAL)
   }
 
+  # Retorna um JSON limpo para o Twilio ficar feliz
   return(list(status = "SUCCESS"))
 }
