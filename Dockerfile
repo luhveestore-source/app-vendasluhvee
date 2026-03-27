@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y \
 # Instala pacotes do R
 RUN R -e "install.packages(c('plumber', 'httr', 'jsonlite'), repos='https://cloud.r-project.org/')"
 
-# Copia tudo para o servidor
+# Copia os arquivos
 COPY . /app
 WORKDIR /app
 
-# Porta do bot
+# Porta
 EXPOSE 8080
 
 # Comando para rodar
