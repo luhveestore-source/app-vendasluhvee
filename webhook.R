@@ -4,22 +4,22 @@ library(httr)
 # =========================
 # CONFIGURAÇÕES
 # =========================
-link_vendas <- "https://luhveestore-unbgvh5h.manus.space"
+LINK_VENDAS <- "https://luhveestore-unbgvh5h.manus.space"
 
 # =========================
 # FUNÇÃO DE ENVIO WHATSAPP
 # =========================
 enviar_msg <- function(numero, mensagem) {
-  # Lemos as chaves aqui dentro para garantir que o Render já as carregou
-  sid   <- Sys.getenv("TWILIO_SID")
-  token <- Sys.getenv("TWILIO_TOKEN")
+  # Buscando as chaves que você salvou no Render (EM MAIÚSCULAS)
+  SID   <- Sys.getenv("TWILIO_SID")
+  TOKEN <- Sys.getenv("TWILIO_TOKEN")
   
-  url <- paste0("https://api.twilio.com/2010-04-01/Accounts/", sid, "/Messages.json")
+  URL_TWILIO <- paste0("https://api.twilio.com/2010-04-01/Accounts/", SID, "/Messages.json")
   
-  print(paste("Enviando resposta para:", numero))
+  print(paste("TENTANDO ENVIAR PARA:", numero))
   
-  res <- POST(url,
-              authenticate(sid, token),
+  RES <- POST(URL_TWILIO,
+              authenticate(SID, TOKEN),
               body = list(
                 From = "whatsapp:+14155238886", 
                 To = numero,
@@ -27,56 +27,57 @@ enviar_msg <- function(numero, mensagem) {
               ),
               encode = "form")
   
-  return(res)
+  return(RES)
 }
 
 # =========================
 # LÓGICA DO BOT (RESPOSTAS)
 # =========================
-responder <- function(msg) {
-  msg <- tolower(msg)
+responder_cliente <- function(msg) {
+  # Converte o que o cliente digitou para minúsculo para facilitar a busca
+  TEXTO <- tolower(msg)
 
-  if (grepl("oi|olá|ola|bom dia|boa tarde", msg)) {
-    return(paste0("😍 Oii! Bem-vinda à Luhvee Stores!\n🔥 Tenho achadinhos exclusivos com preço baixo HOJE!\n👉 Quer ver agora? ", link_vendas))
+  if (grepl("oi|olá|ola|bom dia|boa tarde", TEXTO)) {
+    return(paste0("😍 Oii! Bem-vinda à Luhvee Stores!\n🔥 Tenho achadinhos exclusivos com preço baixo HOJE!\n👉 Quer ver agora? ", LINK_VENDAS))
   }
 
-  if (grepl("preço|valor|quanto|custo", msg)) {
-    return(paste0("💰 Os preços estão promocionais HOJE!\n⚡ Corre antes que acabe:\n👉 ", link_vendas))
+  if (grepl("preço|valor|quanto|custo|preco", TEXTO)) {
+    return(paste0("💰 Os preços estão promocionais HOJE!\n⚡ Corre antes que acabe:\n👉 ", LINK_VENDAS))
   }
 
-  if (grepl("comprar|quero|ten|tem|produto|link", msg)) {
-    return(paste0("🛒 Perfeito! Já pode garantir o seu aqui:\n👉 ", link_vendas, "\n🔥 Estoque LIMITADO! Garanta o seu antes que esgote!"))
+  if (grepl("comprar|quero|ten|tem|produto|link|site", TEXTO)) {
+    return(paste0("🛒 Perfeito! Já pode garantir o seu aqui:\n👉 ", LINK_VENDAS, "\n🔥 Estoque LIMITADO! Garanta o seu antes que esgote!"))
   }
 
-  return(paste0("🔥 Temos ofertas absurdas HOJE na Luhvee Stores!\n👉 Veja aqui todos os itens: ", link_vendas, "\n💖 Você vai amar!"))
+  # RESPOSTA PADRÃO
+  return(paste0("🔥 Temos ofertas absurdas HOJE na Luhvee Stores!\n👉 Veja aqui todos os itens: ", LINK_VENDAS, "\n💖 Você vai amar!"))
 }
 
 # =========================
-# WEBHOOK (ENTRADA)
+# WEBHOOK (ENTRADA DE DADOS)
 # =========================
 
 #* @post /whatsapp
 function(req) {
-  # AJUSTE VITAL: Converter o corpo da requisição para lista
-  dados <- as.list(req$postBody)
+  # Garante que o Plumber entenda os dados vindos do Twilio
+  DADOS <- as.list(req$postBody)
   
-  # O Twilio envia os campos 'From' e 'Body'
-  numero   <- dados$From
-  mensagem <- dados$Body
+  NUMERO_CLIENTE   <- DADOS$From
+  MENSAGEM_CLIENTE <- DADOS$Body
   
-  # Se os dados vierem vazios, tentamos outra forma comum no Plumber
-  if (is.null(numero)) {
-    dados <- req$body
-    numero <- dados$From
-    mensagem <- dados$Body
+  # Caso a primeira tentativa falhe, tenta o formato alternativo
+  if (is.null(NUMERO_CLIENTE)) {
+    DADOS <- req$body
+    NUMERO_CLIENTE <- DADOS$From
+    MENSAGEM_CLIENTE <- DADOS$Body
   }
 
-  print(paste("Mensagem recebida de:", numero, "| Conteúdo:", mensagem))
+  print(paste("MENSAGEM RECEBIDA DE:", NUMERO_CLIENTE))
 
-  if (!is.null(numero) && !is.null(mensagem)) {
-    resposta_texto <- responder(mensagem)
-    enviar_msg(numero, resposta_texto)
+  if (!is.null(NUMERO_CLIENTE) && !is.null(MENSAGEM_CLIENTE)) {
+    RESPOSTA_FINAL <- responder_cliente(MENSAGEM_CLIENTE)
+    enviar_msg(NUMERO_CLIENTE, RESPOSTA_FINAL)
   }
 
-  return(list(status = "success"))
+  return(list(status = "SUCCESS"))
 }
