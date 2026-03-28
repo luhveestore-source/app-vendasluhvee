@@ -1,24 +1,23 @@
 library(plumber)
 library(httr)
 
-# =========================
-# CONFIGURAÇÕES
-# =========================
-LINK_VENDAS <- "https://luhveestore-unbgvh5h.manus.space"
+# ==========================================
+# COLOQUE SEUS DADOS AQUI (ENTRE AS ASPAS)
+# ==========================================
+MINHA_CHAVE_SID   <- "COLE_AQUI_SEU_AC_DO_TWILIO"
+MEU_TOKEN_TWILIO  <- "COLE_AQUI_SEU_TOKEN_DO_TWILIO"
+LINK_VENDAS       <- "https://luhveestore-unbgvh5h.manus.space"
 
 # =========================
-# FUNÇÃO DE ENVIO WHATSAPP
+# FUNÇÃO DE ENVIO
 # =========================
 enviar_msg <- function(numero, mensagem) {
-  SID   <- Sys.getenv("TWILIO_SID")
-  TOKEN <- Sys.getenv("TWILIO_TOKEN")
-  
-  URL_TWILIO <- paste0("https://api.twilio.com/2010-04-01/Accounts/", SID, "/Messages.json")
+  URL_TWILIO <- paste0("https://api.twilio.com/2010-04-01/Accounts/", MINHA_CHAVE_SID, "/Messages.json")
   
   print(paste("TENTANDO ENVIAR PARA:", numero))
   
   RES <- POST(URL_TWILIO,
-              authenticate(SID, TOKEN),
+              authenticate(MINHA_CHAVE_SID, MEU_TOKEN_TWILIO),
               body = list(
                 From = "whatsapp:+14155238886", 
                 To = numero,
@@ -30,37 +29,11 @@ enviar_msg <- function(numero, mensagem) {
   return(RES)
 }
 
-# =========================
-# LÓGICA DO BOT
-# =========================
-responder_cliente <- function(msg) {
-  TEXTO <- tolower(msg)
-
-  if (grepl("oi|olá|ola|bom dia|boa tarde", TEXTO)) {
-    return(paste0("😍 Oii! Bem-vinda à Luhvee Stores!\n🔥 Tenho achadinhos exclusivos com preço baixo HOJE!\n👉 Quer ver agora? ", LINK_VENDAS))
-  }
-  if (grepl("preço|valor|quanto|custo|preco", TEXTO)) {
-    return(paste0("💰 Os preços estão promocionais HOJE!\n⚡ Corre antes que acabe:\n👉 ", LINK_VENDAS))
-  }
-  if (grepl("comprar|quero|ten|tem|produto|link|site", TEXTO)) {
-    return(paste0("🛒 Perfeito! Já pode garantir o seu aqui:\n👉 ", LINK_VENDAS, "\n🔥 Estoque LIMITADO! Garanta o seu antes que esgote!"))
-  }
-
-  return(paste0("🔥 Temos ofertas absurdas HOJE na Luhvee Stores!\n👉 Veja aqui todos os itens: ", LINK_VENDAS, "\n💖 Você vai amar!"))
-}
-
-# =========================
-# WEBHOOK (VERSÃO SIMPLIFICADA)
-# =========================
-
 #* @post /whatsapp
 #* @serializer json
 function(req) {
-  # O Plumber já traz os dados no 'argsQuery' ou 'postBody'
-  # Vamos capturar de forma direta:
   params <- URLdecode(req$postBody)
   
-  # Extraindo o número e a mensagem usando busca de texto simples
   try({
     NUMERO_CLIENTE <- gsub(".From=(whatsapp%3A%2B[0-9]+).", "\\1", params)
     NUMERO_CLIENTE <- URLdecode(NUMERO_CLIENTE)
@@ -68,11 +41,9 @@ function(req) {
     MENSAGEM_CLIENTE <- gsub(".Body=([^&]+).", "\\1", params)
     MENSAGEM_CLIENTE <- URLdecode(gsub("\\+", " ", MENSAGEM_CLIENTE))
     
-    print(paste("MENSAGEM RECEBIDA DE:", NUMERO_CLIENTE))
-    
-    if (!is.null(NUMERO_CLIENTE) && !is.null(MENSAGEM_CLIENTE)) {
-      RESPOSTA_FINAL <- responder_cliente(MENSAGEM_CLIENTE)
-      enviar_msg(NUMERO_CLIENTE, RESPOSTA_FINAL)
+    if (!is.null(NUMERO_CLIENTE)) {
+      RESPOSTA <- paste0("😍 Oii! Bem-vinda à Luhvee Stores!\n👉 Veja nossos achadinhos aqui: ", LINK_VENDAS)
+      enviar_msg(NUMERO_CLIENTE, RESPOSTA)
     }
   })
 
