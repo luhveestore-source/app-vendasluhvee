@@ -4,8 +4,8 @@ library(httr)
 # ==========================================
 # COLOQUE SEUS DADOS AQUI (ENTRE AS ASPAS)
 # ==========================================
-MINHA_CHAVE_SID   <- "COLE_AQUI_SEU_AC_DO_TWILIO"
-MEU_TOKEN_TWILIO  <- "COLE_AQUI_SEU_TOKEN_DO_TWILIO"
+MINHA_CHAVE_SID   <- "AC6627b6f6de8f0121dac1a92dfb093133"
+MEU_TOKEN_TWILIO  <- "1cd70e18bb15cdefb2450e1a7c334f3f"
 LINK_VENDAS       <- "https://luhveestore-unbgvh5h.manus.space"
 
 # =========================
